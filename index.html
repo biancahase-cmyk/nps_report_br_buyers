@@ -679,7 +679,7 @@ function renderEtapa2(team, tabId) {
   const sumImpact = rows.reduce((s,r)=>s+r.impact,0);
   const totalImpact = sumImpact + outros;
 
-  const sortedRows = [...rows].sort((a,b) => Math.abs(b.impact) - Math.abs(a.impact));
+  const sortedRows = [...rows].sort((a,b) => b.impact - a.impact);
 
   let trows = sortedRows.map(r => `
     <tr>
@@ -695,7 +695,7 @@ function renderEtapa2(team, tabId) {
   trows += `<tr class="row-total"><td>Total</td><td>${fmt(team.nps_a)}%</td><td>${fmt(team.nps_b)}%</td><td>100%</td><td class="${colorClass(totalImpact)}">${totalImpact>=0?'+':''}${fmt(totalImpact,2)} pp</td></tr>`;
 
   const wowTotal = team.nps_a - team.nps_b;
-  const worstP = sortedRows.filter(r => r.impact < 0)[0];
+  const worstP = sortedRows.filter(r => r.impact < 0).at(-1);
   const bestP  = sortedRows.filter(r => r.impact > 0)[0];
   const worstCtx = worstP
     ? `<strong>"${worstP.proc}"</strong> puxou negativamente ${fmtPP(worstP.impact,2,true)} \u2014 este processo teve NPS de ${fmt(worstP.nps_a)}% vs ${fmt(worstP.nps_b)}% na semana anterior e representa ${(worstP.rep*100).toFixed(0)}% do volume, indicando piora na experi\u00eancia dos clientes nessa jornada`
