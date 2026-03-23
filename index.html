@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte Semanal NPS — BR Buyers</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; font-size: 13px; }
+  .page-container { max-width: 900px; margin: 0 auto; padding: 24px; background: #fff; min-height: 100vh; }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 24px; gap: 0; }
+  .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 13px; font-weight: 600; color: #666; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; white-space: nowrap; }
+  .tab-btn:hover { color: #1a73e8; }
+  .tab-btn.active { color: #1a73e8; border-bottom: 3px solid #1a73e8; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* HEADER */
+  .report-header { background: #1a73e8; color: #fff; padding: 20px 24px; border-radius: 8px; margin-bottom: 8px; }
+  .report-header h1 { font-size: 18px; font-weight: 700; }
+  .report-subtitle { color: #666; font-size: 12px; margin-bottom: 20px; padding: 6px 0; }
+
+  /* CARDS */
+  .cards-row { display: flex; gap: 16px; margin-bottom: 28px; }
+  .card { flex: 1; border-radius: 8px; padding: 20px; border: 1px solid #e0e0e0; }
+  .card-blue { border-top: 3px solid #1a73e8; }
+  .card-gray { border-top: 3px solid #9e9e9e; }
+  .card-red { border-top: 3px solid #d32f2f; }
+  .card-green { border-top: 3px solid #388e3c; }
+  .card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #666; margin-bottom: 8px; }
+  .card-value { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .card-value-blue { color: #1a73e8; }
+  .card-value-gray { color: #757575; }
+  .card-value-red { color: #d32f2f; }
+  .card-value-green { color: #388e3c; }
+  .card-sub { font-size: 12px; color: #666; }
+
+  /* SECTION */
+  .section { margin-bottom: 32px; }
+  .section-title { font-size: 14px; color: #1a73e8; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #1a73e8; padding-bottom: 6px; margin-bottom: 14px; }
+
+  /* TABLES */
+  table { border-collapse: collapse; width: 100%; margin-bottom: 14px; }
+  thead tr { background: #f5f5f5; }
+  th { text-align: left; padding: 8px 10px; font-size: 12px; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e0e0e0; font-size: 12px; }
+  tr.row-total td { background: #e8f0fe; font-weight: 700; }
+  tr.row-italic td { font-style: italic; color: #888; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .val-neg { color: #d32f2f; font-weight: 600; }
+  .val-pos { color: #388e3c; font-weight: 600; }
+
+  /* CHART BOX */
+  .chart-box { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 14px; height: 340px; position: relative; }
+  .chart-title { font-size: 12px; font-weight: 700; color: #444; margin-bottom: 8px; }
+
+  /* LECTURA */
+  .lectura-box { border-left: 4px solid #1a73e8; background: #e8f0fe; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-size: 12px; line-height: 1.6; }
+  .lectura-box strong { color: #1a73e8; }
+
+  /* HALLAZGOS / ACCOES */
+  .hallazgos-box { border: 1px solid #1a73e8; background: #e8f0fe; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+  .hallazgos-box h3 { color: #1a73e8; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .accoes-box { border: 1px solid #388e3c; background: #e8f6f0; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+  .accoes-box h3 { color: #388e3c; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .box-list { list-style: none; padding: 0; }
+  .box-list li { padding: 4px 0; font-size: 12px; line-height: 1.5; }
+  .box-list li::before { content: '• '; font-weight: 700; }
+  .box-list li strong { font-weight: 700; }
+
+  /* ETAPA 4 subtitle */
+  .etapa4-sub { font-size: 12px; color: #555; margin-bottom: 10px; }
+
+  /* ALERTA */
+  .alerta-ok { color: #388e3c; font-size: 14px; }
+  .alerta-bad { color: #d32f2f; font-size: 14px; }
+
+  /* INSIGHTS */
+  .insights-box { border: 1.5px solid #1a73e8; background: #f8fbff; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+  .insights-header { font-size: 13px; font-weight: 700; color: #1a73e8; margin-bottom: 12px; }
+  .insights-list { display: flex; flex-direction: column; gap: 8px; }
+  .insight-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.5; padding: 8px 12px; border-radius: 6px; }
+  .ins-icon { font-size: 14px; min-width: 20px; }
+  .ins-pos  { background: #e8f5e9; border-left: 3px solid #388e3c; }
+  .ins-neg  { background: #fdecea; border-left: 3px solid #d32f2f; }
+  .ins-alert { background: #fff3e0; border-left: 3px solid #f57c00; }
+  .ins-neutral { background: #f5f5f5; border-left: 3px solid #9e9e9e; }
+  .ins-opportunity { background: #e8f0fe; border-left: 3px solid #1a73e8; }
+  /* ACOES */
+  .acoes-box { border: 1.5px solid #388e3c; background: #f6fbf7; border-radius: 10px; padding: 18px 20px; margin-bottom: 24px; }
+  .acoes-header { font-size: 13px; font-weight: 700; color: #388e3c; margin-bottom: 12px; }
+  .acoes-list { display: flex; flex-direction: column; gap: 8px; }
+  .acao-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.5; padding: 8px 12px; background: #fff; border: 1px solid #c8e6c9; border-radius: 6px; }
+  .acao-icon { font-size: 14px; min-width: 20px; }
+
+  /* ETAPA 4 FILTER */
+  .proc-filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .proc-filter-row label { font-size: 12px; font-weight: 700; color: #444; }
+  .proc-filter-select { font-size: 12px; padding: 5px 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; min-width: 260px; }
+  .sol-section-title { font-size: 12px; font-weight: 700; color: #555; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="page-container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('cross')">&#127760; Cross</button>
+    <button class="tab-btn" onclick="switchTab('pre')">BR_Buyers_Pre_Entrega</button>
+    <button class="tab-btn" onclick="switchTab('post')">BR_Buyers_Post_Entrega</button>
+    <button class="tab-btn" onclick="switchTab('compra')">BR_Buyers_Compra</button>
+  </div>
+
+  <!-- ==================== TAB CROSS ==================== -->
+  <div id="tab-cross" class="tab-content active"></div>
+
+  <!-- ==================== TAB PRE ENTREGA ==================== -->
+  <div id="tab-pre" class="tab-content"></div>
+
+  <!-- ==================== TAB POST ENTREGA ==================== -->
+  <div id="tab-post" class="tab-content"></div>
+
+  <!-- ==================== TAB COMPRA ==================== -->
+  <div id="tab-compra" class="tab-content"></div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', { display: false }); // desabilitado por padrão, ativo só no waterfall
+// =====================================================================
+// UTILITIES
+// =====================================================================
+function fmt(v, decimals=1) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return v.toFixed(decimals);
+}
+function fmtPP(v, decimals=1, showSign=true) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  const s = showSign && v > 0 ? '+' : '';
+  return s + v.toFixed(decimals) + ' pp';
+}
+function colorClass(v, threshold=0) {
+  if (v === null || v === undefined || isNaN(v)) return '';
+  return v < threshold ? 'val-neg' : (v > threshold ? 'val-pos' : '');
+}
+function colorSign(v) { return v < 0 ? '#d32f2f' : (v > 0 ? '#388e3c' : '#888'); }
+
+function buildSection(title, content) {
+  return `<div class="section"><div class="section-title">${title}</div>${content}</div>`;
+}
+
+// <<DATA_START>>
+const DATES = {
+  week_a: '16–22/03',
+  week_b: '09–15/03',
+  year: '2026',
+  week_a_start: '2026-03-16',
+  week_a_end: '2026-03-22',
+  week_b_start: '2026-03-09',
+  week_b_end: '2026-03-15',
+};
+const teams = {
+  pre: {
+    name: 'BR_Buyers_Pre_Entrega',
+    nps_a: 50.3, enc_a: 4369, target: 52.1, gap: -1.8,
+    nps_b: 50.7, enc_b: 4290, gap_b: -1.2,
+    target_b: 51.9,
+    etapa2: [
+      {proc:'Viaje del paquete - Comprador', nps_a:56.0, nps_b:54.9, enc_a:2915},
+      {proc:'Posterior a la Entrega', nps_a:32.8, nps_b:39.1, enc_a:820},
+      {proc:'PNR - MP', nps_a:49.3, nps_b:55.8, enc_a:337},
+      {proc:'Jornada de la entrega', nps_a:47.1, nps_b:65.9, enc_a:85},
+      {proc:'PNR - Contradictorio XD DS FBM', nps_a:39.2, nps_b:33.8, enc_a:51},
+      {proc:'PNR - Previo al despacho XD DS', nps_a:37.8, nps_b:35.9, enc_a:45},
+      {proc:'Estado del pago de una compra - Buyer', nps_a:68.6, nps_b:8.1, enc_a:35},
+    ],
+    etapa3: [
+      {proc:'PNR - Contradictorio - Flex', nps:21.1, tgt:49.1, enc:19},
+      {proc:'PNR - Contradictorio XD DS FBM', nps:39.2, tgt:50.0, enc:51},
+      {proc:'Posterior a la Entrega', nps:32.8, tgt:42.0, enc:820},
+      {proc:'PNR - OP', nps:12.5, tgt:20.0, enc:32},
+      {proc:'PNR - MP', nps:49.3, tgt:56.8, enc:337},
+    ],
+    etapa4: {
+      proc:'PNR - MP', proc_nps:49.3, proc_tgt:56.8, total_det:68,
+      cdus:[
+        {cdu:'PNR C - C confirma que no recibe',det:18},
+        {cdu:'PNR - C recibe ',det:17},
+        {cdu:'PNR Envío extraviado',det:10},
+        {cdu:'PNR V Devuelve el pago',det:7},
+        {cdu:'Otros PNR',det:7},
+        {cdu:'Outros',det:9},
+      ],
+      sols:[
+        {sol:'Mediação encerrada: entrega confirmada (PNR) (fallo V)',cnt:144},
+        {sol:'Mediação encerrada: produto em devolução ao remetente (fallo C)',cnt:32},
+        {sol:'Mediação encerrada: produto extraviado (fallo C)',cnt:31},
+        {sol:'Mediação encerrada: V quer encerrar proativamente por PNR - fallo C',cnt:27},
+        {sol:'Mediação encerrada: C não recebeu produto/serviço (fallo C)',cnt:25},
+        {sol:'Outros',cnt:78},
+      ]
+    },
+    etapa4_procs: [
+      {proc:'PNR - MP', total_det:68, enc:337, proc_nps:49.3, proc_tgt:56.8,
+       cdus:[
+         {cdu:'PNR C - C confirma que no recibe',det:18},
+         {cdu:'PNR - C recibe ',det:17},
+         {cdu:'PNR Envío extraviado',det:10},
+         {cdu:'PNR V Devuelve el pago',det:7},
+         {cdu:'Otros PNR',det:7},
+         {cdu:'Outros',det:9},
+       ],
+       sols:[
+         {sol:'Mediação encerrada: entrega confirmada (PNR) (fallo V)',cnt:144},
+         {sol:'Mediação encerrada: produto em devolução ao remetente (fallo C)',cnt:32},
+         {sol:'Mediação encerrada: produto extraviado (fallo C)',cnt:31},
+         {sol:'Mediação encerrada: V quer encerrar proativamente por PNR - fallo C',cnt:27},
+         {sol:'Mediação encerrada: C não recebeu produto/serviço (fallo C)',cnt:25},
+         {sol:'Outros',cnt:78},
+       ]
+      },
+      {proc:'Posterior a la Entrega', total_det:224, enc:820, proc_nps:32.8, proc_tgt:42.0,
+       cdus:[
+         {cdu:'Devoluciones',det:52},
+         {cdu:'Mediación abierta',det:45},
+         {cdu:'Reclamo abierto',det:31},
+         {cdu:'No puede iniciar reclamo',det:23},
+         {cdu:'Iniciar reclamo en nombre del comprador',det:21},
+         {cdu:'Outros',det:52},
+       ],
+       sols:[
+         {sol:'PE - Iniciar reclamação em nome do comprador -  PDD',cnt:81},
+         {sol:'Level Up: usuário consulta por mediação aberta',cnt:79},
+         {sol:'Level Up: reclamação aberta PNR Contraditório HOLD 48h',cnt:64},
+         {sol:'PE - Iniciar reclamação em nome do comprador: PNR contraditório',cnt:63},
+         {sol:'PE - Devolução Express: comprador não sabe como funciona (C)',cnt:63},
+         {sol:'Outros',cnt:470},
+       ]
+      },
+      {proc:'Viaje del paquete - Comprador', total_det:470, enc:2915, proc_nps:56.0, proc_tgt:54.8,
+       cdus:[
+         {cdu:'Tiene dudas sobre el estado del envio',det:354},
+         {cdu:'Quiere cancelar o reprogramar el envío',det:46},
+         {cdu:'Bugs',det:24},
+         {cdu:'Necesita que le liberen el dinero',det:11},
+         {cdu:'Generales',det:11},
+         {cdu:'Outros',det:24},
+       ],
+       sols:[
+         {sol:'Envio demorado - informamos data de entrega (C)',cnt:1039},
+         {sol:'Envio a caminho - informamos data de entrega (C)',cnt:489},
+         {sol:'Envio a caminho - executamos cancelamento alteração de estado (C)',cnt:234},
+         {sol:'Envio a caminho - executamos cancelamento express (C)',cnt:196},
+         {sol:'Reclama por PNR: reclamação - preciso que chegue',cnt:156},
+         {sol:'Outros',cnt:801},
+       ]
+      },
+    ],
+    etapa5: [
+      {o:'AEC',en:56.0,et:55.2,nn:48.7,nt:55.5},
+      {o:'ATE',en:45.4,et:47.2,nn:40.2,nt:45.7},
+      {o:'INT',en:60.4,et:56.7,nn:9.1,nt:51.1},
+    ],
+    etapa6: {
+      team_surveys: 4369,
+      rows:[
+        {o:'AEC',ag:130,q1:80.4,q4:21.5},
+        {o:'ATE',ag:47,q1:78.2,q4:12.0},
+        {o:'INT',ag:6,q1:77.2,q4:40.0},
+      ]
+    },
+    hallazgos: [
+      {bold:'NPS BR_Buyers_Pre_Entrega', desc:': 50.3% com 4,369 encuestas e GAP de -1.8 pp vs target'},
+    ],
+    accoes: [
+      {bold:'Revisar processos criticos:', desc:' ver etapa 3 para priorizar acoes'},
+    ],
+  },
+  post: {
+    name: 'BR_Buyers_Post_Entrega',
+    nps_a: 54.6, enc_a: 4819, target: 58.3, gap: -3.7,
+    nps_b: 58.1, enc_b: 4196, gap_b: -2.4,
+    target_b: 60.5,
+    etapa2: [
+      {proc:'Posterior a la Entrega', nps_a:34.0, nps_b:42.7, enc_a:1045},
+      {proc:'Defectuoso - FBM', nps_a:72.5, nps_b:63.9, enc_a:364},
+      {proc:'Defectuoso - XD', nps_a:55.4, nps_b:58.6, enc_a:307},
+      {proc:'Defectuoso - 1P&PL', nps_a:82.5, nps_b:87.1, enc_a:275},
+      {proc:'Arrepentimiento - XD', nps_a:61.3, nps_b:54.7, enc_a:274},
+      {proc:'Diferente - XD', nps_a:54.0, nps_b:46.6, enc_a:239},
+      {proc:'Pre Compra', nps_a:77.9, nps_b:71.1, enc_a:222},
+    ],
+    etapa3: [
+      {proc:'MED - Recontacto - Parciales', nps:-20.0, tgt:14.4, enc:15},
+      {proc:'Defectuoso - Flex', nps:41.7, tgt:65.9, enc:36},
+      {proc:'Caja Vacía - DS', nps:47.6, tgt:61.5, enc:21},
+      {proc:'Arrepentimiento - Flex', nps:33.3, tgt:47.1, enc:12},
+      {proc:'Posterior a la Entrega', nps:34.0, tgt:46.8, enc:1045},
+    ],
+    etapa4: {
+      proc:'Defectuoso - XD', proc_nps:55.4, proc_tgt:62.5, total_det:58,
+      cdus:[
+        {cdu:'MED PDD Devolución efectiva',det:13},
+        {cdu:'MED PDD Parcial',det:11},
+        {cdu:'MED PDD Devolución no efectiva',det:6},
+        {cdu:'MED PDD Oportunidad V',det:6},
+        {cdu:'MED Fuera de Compra Protegida',det:5},
+        {cdu:'Outros',det:17},
+      ],
+      sols:[
+        {sol:'Geramos código de devolução',cnt:61},
+        {sol:'Mediação encerrada: culpa transporte - pagamos CG (fallo ambos)',cnt:59},
+        {sol:'Mediação encerrada: produto irrecuperável - pagamos CG (fallo C)',cnt:30},
+        {sol:'Mediação encerrada: vendedor não coleta - pagamos CG (fallo C)',cnt:25},
+        {sol:'Mediação encerrada: pagamos CG parcial ao C - não retiramos do V (fallo V)',cnt:22},
+        {sol:'Outros',cnt:110},
+      ]
+    },
+    etapa4_procs: [
+      {proc:'Defectuoso - XD', total_det:58, enc:307, proc_nps:55.4, proc_tgt:62.5,
+       cdus:[
+         {cdu:'MED PDD Devolución efectiva',det:13},
+         {cdu:'MED PDD Parcial',det:11},
+         {cdu:'MED PDD Devolución no efectiva',det:6},
+         {cdu:'MED PDD Oportunidad V',det:6},
+         {cdu:'MED Fuera de Compra Protegida',det:5},
+         {cdu:'Outros',det:17},
+       ],
+       sols:[
+         {sol:'Geramos código de devolução',cnt:61},
+         {sol:'Mediação encerrada: culpa transporte - pagamos CG (fallo ambos)',cnt:59},
+         {sol:'Mediação encerrada: produto irrecuperável - pagamos CG (fallo C)',cnt:30},
+         {sol:'Mediação encerrada: vendedor não coleta - pagamos CG (fallo C)',cnt:25},
+         {sol:'Mediação encerrada: pagamos CG parcial ao C - não retiramos do V (fallo V)',cnt:22},
+         {sol:'Outros',cnt:110},
+       ]
+      },
+      {proc:'Diferente - XD', total_det:44, enc:239, proc_nps:54.0, proc_tgt:53.6,
+       cdus:[
+         {cdu:'MED PDD Devolución efectiva',det:20},
+         {cdu:'MED PDD Ambos',det:6},
+         {cdu:'MED PDD Devolución no efectiva',det:4},
+         {cdu:'MED PDD Grandes Dimensiones',det:4},
+         {cdu:'MED PDD Oportunidad V',det:2},
+         {cdu:'Outros',det:8},
+       ],
+       sols:[
+         {sol:'Geramos código de devolução',cnt:112},
+         {sol:'Mediação encerrada: vendedor não coleta - pagamos CG (fallo C)',cnt:17},
+         {sol:'Mediação encerrada: pacote cruzado (fallo ambos)',cnt:16},
+         {sol:'Mediação encerrada: devolução confirmada - pagamos CG - manual (fallo C)',cnt:14},
+         {sol:'Devoluções: fallo ambos',cnt:12},
+         {sol:'Outros',cnt:68},
+       ]
+      },
+      {proc:'Posterior a la Entrega', total_det:285, enc:1045, proc_nps:34.0, proc_tgt:46.8,
+       cdus:[
+         {cdu:'Mediación abierta',det:65},
+         {cdu:'Devoluciones',det:44},
+         {cdu:'Reclamo abierto',det:44},
+         {cdu:'No puede iniciar reclamo',det:38},
+         {cdu:'Iniciar reclamo en nombre del comprador',det:38},
+         {cdu:'Outros',det:56},
+       ],
+       sols:[
+         {sol:'PE - Iniciar reclamação em nome do comprador -  PDD',cnt:138},
+         {sol:'Level Up: usuário consulta por mediação aberta',cnt:133},
+         {sol:'PE - Devolução Express: comprador não sabe como funciona (C)',cnt:108},
+         {sol:'Level Up: reclamação aberta PDD',cnt:86},
+         {sol:'PE - Iniciar reclamação em nome do comprador: PNR contraditório',cnt:61},
+         {sol:'Outros',cnt:519},
+       ]
+      },
+    ],
+    etapa5: [
+      {o:'AEC',en:55.5,et:56.3,nn:35.5,nt:51.0},
+      {o:'ATE',en:59.7,et:61.2,nn:68.9,nt:65.7},
+      {o:'INT',en:62.3,et:62.3,nn:64.0,nt:68.2},
+      {o:'KTA',en:null,et:null,nn:50.6,nt:62.5},
+    ],
+    etapa6: {
+      team_surveys: 4819,
+      rows:[
+        {o:'AEC',ag:27,q1:92.1,q4:26.6},
+        {o:'ATE',ag:19,q1:93.3,q4:26.6},
+      ]
+    },
+    hallazgos: [
+      {bold:'NPS BR_Buyers_Post_Entrega', desc:': 54.6% com 4,819 encuestas e GAP de -3.7 pp vs target'},
+    ],
+    accoes: [
+      {bold:'Revisar processos criticos:', desc:' ver etapa 3 para priorizar acoes'},
+    ],
+  },
+  compra: {
+    name: 'BR_Buyers_Compra',
+    nps_a: 62.0, enc_a: 1020, target: 57.6, gap: 4.4,
+    nps_b: 67.0, enc_b: 1237, gap_b: 7.8,
+    target_b: 59.2,
+    etapa2: [
+      {proc:'Pre Compra', nps_a:81.7, nps_b:82.5, enc_a:344},
+      {proc:'Viaje del paquete - Comprador', nps_a:51.7, nps_b:62.8, enc_a:267},
+      {proc:'Posterior a la Entrega', nps_a:38.8, nps_b:45.6, enc_a:139},
+      {proc:'Estado del pago de una compra - Buyer', nps_a:67.9, nps_b:63.8, enc_a:137},
+      {proc:'Loyalty', nps_a:55.0, nps_b:55.2, enc_a:111},
+      {proc:'Jornada de la entrega', nps_a:35.3, nps_b:66.7, enc_a:17},
+    ],
+    etapa3: [
+      {proc:'Jornada de la entrega', nps:35.3, tgt:41.0, enc:17},
+      {proc:'Posterior a la Entrega', nps:38.8, tgt:41.8, enc:139},
+      {proc:'Loyalty', nps:55.0, tgt:58.0, enc:111},
+      {proc:'Viaje del paquete - Comprador', nps:51.7, tgt:52.5, enc:267},
+      {proc:'Estado del pago de una compra - Buyer', nps:67.9, tgt:61.7, enc:137},
+    ],
+    etapa4: {
+      proc:'Posterior a la Entrega', proc_nps:38.8, proc_tgt:41.8, total_det:37,
+      cdus:[
+        {cdu:'Mediación cerrada',det:9},
+        {cdu:'Mediación abierta',det:8},
+        {cdu:'No puede iniciar reclamo',det:6},
+        {cdu:'Devoluciones',det:5},
+        {cdu:'Reclamo abierto',det:4},
+        {cdu:'Outros',det:5},
+      ],
+      sols:[
+        {sol:'Level Up: usuário consulta por mediação aberta',cnt:18},
+        {sol:'PE - Iniciar reclamação em nome do comprador -  PDD',cnt:14},
+        {sol:'Level Up: reclamação aberta PNR Contraditório HOLD 48h',cnt:12},
+        {sol:'Mercado Play: Reembolso por arrependimento ou erro',cnt:8},
+        {sol:'PE - Mediação aberta Verdi',cnt:8},
+        {sol:'Outros',cnt:79},
+      ]
+    },
+    etapa4_procs: [
+      {proc:'Posterior a la Entrega', total_det:37, enc:139, proc_nps:38.8, proc_tgt:41.8,
+       cdus:[
+         {cdu:'Mediación cerrada',det:9},
+         {cdu:'Mediación abierta',det:8},
+         {cdu:'No puede iniciar reclamo',det:6},
+         {cdu:'Devoluciones',det:5},
+         {cdu:'Reclamo abierto',det:4},
+         {cdu:'Outros',det:5},
+       ],
+       sols:[
+         {sol:'Level Up: usuário consulta por mediação aberta',cnt:18},
+         {sol:'PE - Iniciar reclamação em nome do comprador -  PDD',cnt:14},
+         {sol:'Level Up: reclamação aberta PNR Contraditório HOLD 48h',cnt:12},
+         {sol:'Mercado Play: Reembolso por arrependimento ou erro',cnt:8},
+         {sol:'PE - Mediação aberta Verdi',cnt:8},
+         {sol:'Outros',cnt:79},
+       ]
+      },
+      {proc:'Pre Compra', total_det:21, enc:344, proc_nps:81.7, proc_tgt:67.4,
+       cdus:[
+         {cdu:'Descuentos Comprador',det:11},
+         {cdu:'Dudas sobre como comprar (usuario no sabe utilizar la plataforma para comprar) ',det:5},
+         {cdu:'Dudas sobre funcionalidades de nuestros servicios (Compra Protegida, Supermercado, etc)',det:2},
+         {cdu:'Quiere cancelar o reprogramar el envío',det:1},
+         {cdu:'Generales',det:1},
+         {cdu:'Outros',det:1},
+       ],
+       sols:[
+         {sol:'PC - Cupom: geramos novo cupom para o cliente',cnt:125},
+         {sol:'PC - Cupom: cliente pede cupom de desconto',cnt:85},
+         {sol:'PC – Como faço uma compra no ML?',cnt:46},
+         {sol:'PC - Mercado Pago: consultas informativas [NÃO USAR SE CLIENTE JÁ TIVER COMPRADO]',cnt:10},
+         {sol:'PC - Perguntas: como falar com o vendedor antes da compra?',cnt:9},
+         {sol:'Outros',cnt:69},
+       ]
+      },
+      {proc:'Viaje del paquete - Comprador', total_det:49, enc:267, proc_nps:51.7, proc_tgt:52.5,
+       cdus:[
+         {cdu:'Tiene dudas sobre el estado del envio',det:36},
+         {cdu:'Quiere cancelar o reprogramar el envío',det:7},
+         {cdu:'Quiere cambiar la dirección o receptor del envío',det:2},
+         {cdu:'Quiere reportar problemas con el transportista',det:1},
+         {cdu:'Quiere actualizar el estado de su envío',det:1},
+         {cdu:'Outros',det:2},
+       ],
+       sols:[
+         {sol:'Envio demorado - informamos data de entrega (C)',cnt:84},
+         {sol:'Envio a caminho - informamos data de entrega (C)',cnt:45},
+         {sol:'Envio a caminho - executamos cancelamento express (C)',cnt:34},
+         {sol:'Envio a caminho - executamos cancelamento alteração de estado (C)',cnt:28},
+         {sol:'Envio cancelado - informamos cancelamento por MELI / vendedor (C)',cnt:10},
+         {sol:'Outros',cnt:66},
+       ]
+      },
+    ],
+    etapa5: [
+      {o:'AEC',en:54.5,et:48.9,nn:16.7,nt:45.8},
+      {o:'ATE',en:65.2,et:60.3,nn:63.9,nt:59.2},
+    ],
+    etapa6: {
+      team_surveys: 1020,
+      rows:[
+        {o:'AEC',ag:4,q1:69.2,q4:50.0},
+        {o:'ATE',ag:21,q1:88.1,q4:37.1},
+      ]
+    },
+    hallazgos: [
+      {bold:'NPS BR_Buyers_Compra', desc:': 62.0% com 1,020 encuestas e GAP de +4.4 pp vs target'},
+    ],
+    accoes: [
+      {bold:'Revisar processos criticos:', desc:' ver etapa 3 para priorizar acoes'},
+    ],
+  }
+};
+// <<DATA_END>>
+
+// =====================================================================
+// CALCULATIONS
+// =====================================================================
+function calcEtapa2(team) {
+  const total = team.enc_a;
+  let sumImpact = 0;
+  const rows = team.etapa2.map(p => {
+    const rep = p.enc_a / total;
+    const impact = (p.nps_a - p.nps_b) * rep;
+    sumImpact += impact;
+    return {...p, rep, impact};
+  });
+  const outros = team.nps_a - team.nps_b - sumImpact;
+  return {rows, outros};
+}
+
+
+function calcEtapa6(team) {
+  const ts = team.etapa6.team_surveys;
+  return team.etapa6.rows.map(r => {
+    const q4sim = r.q1 - 35;
+    const ganho = Math.max(0, (q4sim - r.q4)) * r.ag * 2.5 / ts;
+    return {...r, q4sim, ganho};
+  });
+}
+
+// =====================================================================
+// BUILD CROSS
+// =====================================================================
+function buildCross() {
+  const all = [teams.pre, teams.post, teams.compra];
+  const tot_a = all.reduce((s,t)=>s+t.enc_a,0);
+  const tot_b = all.reduce((s,t)=>s+t.enc_b,0);
+  const nps_a = Math.round(all.reduce((s,t)=>s+t.nps_a*t.enc_a,0)/tot_a*10)/10;
+  const nps_b = Math.round(all.reduce((s,t)=>s+t.nps_b*t.enc_b,0)/tot_b*10)/10;
+  const target = Math.round(all.reduce((s,t)=>s+t.target*t.enc_a,0)/tot_a*10)/10;
+  const gap = Math.round((nps_a-target)*10)/10;
+  const target_b = Math.round(all.reduce((s,t)=>s+t.target*t.enc_b,0)/tot_b*10)/10;
+  const gap_b = Math.round((nps_b-target_b)*10)/10;
+
+  // Etapa2: aggregate by process name
+  const pmap2 = {};
+  all.forEach(t => {
+    const ratio = t.enc_b > 0 ? t.enc_b / t.enc_a : 1;
+    t.etapa2.forEach(p => {
+      if (!pmap2[p.proc]) pmap2[p.proc] = {proc:p.proc, wa:0, wb:0, ea:0, eb:0};
+      const eb = p.enc_a * ratio;
+      pmap2[p.proc].ea += p.enc_a;
+      pmap2[p.proc].wa += p.nps_a * p.enc_a;
+      pmap2[p.proc].eb += eb;
+      pmap2[p.proc].wb += p.nps_b * eb;
+    });
+  });
+  const etapa2 = Object.values(pmap2)
+    .map(p => ({proc:p.proc, nps_a:Math.round(p.wa/p.ea*10)/10, nps_b:Math.round(p.wb/p.eb*10)/10, enc_a:Math.round(p.ea)}))
+    .sort((a,b) => b.enc_a - a.enc_a).slice(0,7);
+
+  // Etapa3: aggregate by process name
+  const pmap3 = {};
+  all.forEach(t => {
+    t.etapa3.forEach(p => {
+      if (!pmap3[p.proc]) pmap3[p.proc] = {proc:p.proc, wn:0, wt:0, enc:0};
+      pmap3[p.proc].enc += p.enc;
+      pmap3[p.proc].wn += p.nps * p.enc;
+      pmap3[p.proc].wt += p.tgt * p.enc;
+    });
+  });
+  const etapa3 = Object.values(pmap3)
+    .map(p => ({proc:p.proc, nps:Math.round(p.wn/p.enc*10)/10, tgt:Math.round(p.wt/p.enc*10)/10, enc:Math.round(p.enc)}))
+    .sort((a,b) => (a.nps-a.tgt)/a.enc - (b.nps-b.tgt)/b.enc).slice(0,5);
+
+  // Etapa4: agregar etapa4_procs de todos os times por nome de processo
+  const procMap = {};
+  all.forEach(t => {
+    const procs = (t.etapa4_procs && t.etapa4_procs.length > 0) ? t.etapa4_procs : [t.etapa4];
+    procs.forEach(pd => {
+      if (!pd.proc) return;
+      if (!procMap[pd.proc]) {
+        procMap[pd.proc] = {proc: pd.proc, total_det: 0, enc: 0, proc_nps: null, proc_tgt: null,
+          _wNps: 0, _wTgt: 0, _wEnc: 0, cdus: {}, sols: {}};
+      }
+      const pm = procMap[pd.proc];
+      pm.total_det += pd.total_det || 0;
+      pm.enc += pd.enc || 0;
+      if (pd.proc_nps !== null && pd.enc > 0) {
+        pm._wNps += pd.proc_nps * pd.enc;
+        pm._wTgt += pd.proc_tgt * pd.enc;
+        pm._wEnc += pd.enc;
+      }
+      (pd.cdus || []).forEach(c => {
+        if (c.cdu === 'Outros') return;
+        pm.cdus[c.cdu] = (pm.cdus[c.cdu] || 0) + c.det;
+      });
+      (pd.sols || []).forEach(s => {
+        if (s.sol === 'Outros') return;
+        pm.sols[s.sol] = (pm.sols[s.sol] || 0) + s.cnt;
+      });
+    });
+  });
+
+  const etapa4_procs = Object.values(procMap)
+    .sort((a, b) => b.total_det - a.total_det)
+    .slice(0, 5)
+    .map(pm => {
+      const pnps = pm._wEnc > 0 ? Math.round(pm._wNps / pm._wEnc * 10) / 10 : null;
+      const ptgt = pm._wEnc > 0 ? Math.round(pm._wTgt / pm._wEnc * 10) / 10 : null;
+      const topCdus = Object.entries(pm.cdus).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([cdu,det])=>({cdu,det}));
+      const outrosDet = pm.total_det - topCdus.reduce((s,c)=>s+c.det,0);
+      topCdus.push({cdu:'Outros', det: Math.max(0, outrosDet)});
+      const topSols = Object.entries(pm.sols).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([sol,cnt])=>({sol,cnt}));
+      const outrosCnt = pm.enc - topSols.reduce((s,x)=>s+x.cnt,0);
+      topSols.push({sol:'Outros', cnt: Math.max(0, outrosCnt)});
+      return {proc: pm.proc, total_det: pm.total_det, enc: pm.enc,
+              proc_nps: pnps, proc_tgt: ptgt, cdus: topCdus, sols: topSols};
+    });
+
+  const totalDet = etapa4_procs.reduce((s,p)=>s+p.total_det,0);
+
+  // Etapa5: all offices labeled
+  const labels5 = ['Pre','Post','Compra'];
+  const etapa5 = [];
+  all.forEach((t,i) => {
+    t.etapa5.forEach(r => etapa5.push({...r, o:`${r.o} (${labels5[i]})`}));
+  });
+
+  // Etapa6: all offices labeled
+  const etapa6rows = [];
+  all.forEach((t,i) => {
+    t.etapa6.rows.forEach(r => etapa6rows.push({...r, o:`${r.o} (${labels5[i]})`}));
+  });
+
+  return {
+    name: 'BR_Buyers \u2014 Cross',
+    nps_a, enc_a: tot_a, target, gap,
+    nps_b, enc_b: tot_b, gap_b,
+    etapa2, etapa3,
+    etapa4: etapa4_procs[0] || {proc:'—', proc_nps:null, proc_tgt:null, total_det:0, cdus:[], sols:[]},
+    etapa4_procs,
+    etapa5,
+    etapa6: {team_surveys:tot_a, rows:etapa6rows},
+  };
+}
+
+// =====================================================================
+// RENDER HELPERS
+// =====================================================================
+function renderMacro(team) {
+  const delta = team.nps_a - team.nps_b;
+  const deltaGap = team.gap - team.gap_b;
+  const target_b = team.target_b !== undefined ? team.target_b : (team.nps_b - team.gap_b);
+  const html = `
+    <table>
+      <thead><tr><th>M\u00e9trica</th><th>${DATES.week_a}/${DATES.year}</th><th>${DATES.week_b}/${DATES.year}</th><th>Delta WoW</th></tr></thead>
+      <tbody>
+        <tr><td><strong>NPS</strong></td><td>${fmt(team.nps_a)}%</td><td>${fmt(team.nps_b)}%</td><td class="${colorClass(delta)}"><strong>${fmtPP(delta, 1, true)}</strong></td></tr>
+        <tr><td>Target</td><td>${fmt(team.target)}%</td><td>${fmt(target_b)}%</td><td>\u2014</td></tr>
+        <tr><td>GAP vs Target</td><td class="${colorClass(team.gap)}">${fmtPP(team.gap,1,true)}</td><td class="${colorClass(team.gap_b)}">${fmtPP(team.gap_b,1,true)}</td><td class="${colorClass(deltaGap)}">${fmtPP(deltaGap,1,true)}</td></tr>
+        <tr><td><strong>Encuestas</strong></td><td><strong>${team.enc_a.toLocaleString('pt-BR')}</strong></td><td><strong>${team.enc_b.toLocaleString('pt-BR')}</strong></td><td>\u2014</td></tr>
+      </tbody>
+    </table>`;
+  return buildSection('Etapa 1 \u2014 Resultado Macro', html);
+}
+
+function renderEtapa2(team, tabId) {
+  const {rows, outros} = calcEtapa2(team);
+  const sumImpact = rows.reduce((s,r)=>s+r.impact,0);
+  const totalImpact = sumImpact + outros;
+
+  const sortedRows = [...rows].sort((a,b) => Math.abs(b.impact) - Math.abs(a.impact));
+
+  let trows = sortedRows.map(r => `
+    <tr>
+      <td>${r.proc}</td>
+      <td>${fmt(r.nps_a)}%</td>
+      <td>${fmt(r.nps_b)}%</td>
+      <td>${(r.rep*100).toFixed(1)}%</td>
+      <td class="${colorClass(r.impact)}">${r.impact>=0?'+':''}${fmt(r.impact,2)} pp</td>
+    </tr>`).join('');
+
+  const outrCls = colorClass(outros);
+  trows += `<tr class="row-italic"><td>Outros processos</td><td>\u2014</td><td>\u2014</td><td>\u2014</td><td class="${outrCls}">${outros>=0?'+':''}${fmt(outros,2)} pp</td></tr>`;
+  trows += `<tr class="row-total"><td>Total</td><td>${fmt(team.nps_a)}%</td><td>${fmt(team.nps_b)}%</td><td>100%</td><td class="${colorClass(totalImpact)}">${totalImpact>=0?'+':''}${fmt(totalImpact,2)} pp</td></tr>`;
+
+  const wowTotal = team.nps_a - team.nps_b;
+  const worstP = sortedRows.filter(r => r.impact < 0)[0];
+  const bestP  = sortedRows.filter(r => r.impact > 0)[0];
+  const worstCtx = worstP
+    ? `<strong>"${worstP.proc}"</strong> puxou negativamente ${fmtPP(worstP.impact,2,true)} \u2014 este processo teve NPS de ${fmt(worstP.nps_a)}% vs ${fmt(worstP.nps_b)}% na semana anterior e representa ${(worstP.rep*100).toFixed(0)}% do volume, indicando piora na experi\u00eancia dos clientes nessa jornada`
+    : 'sem processo com impacto negativo significativo';
+  const bestCtx = bestP
+    ? `<strong>"${bestP.proc}"</strong> contribuiu positivamente ${fmtPP(bestP.impact,2,true)} (NPS ${fmt(bestP.nps_a)}% vs ${fmt(bestP.nps_b)}% ant., ${(bestP.rep*100).toFixed(0)}% do volume)`
+    : 'sem processo com impacto positivo significativo';
+  const lecturaText = `Varia\u00e7\u00e3o WoW total de <strong>${fmtPP(wowTotal,1,true)}</strong>. ${worstCtx}. ${bestP ? 'Em contrapartida, ' + bestCtx + '.' : ''} O residual "Outros processos" acumula ${fmtPP(outros,2,true)} (processos com volume < 15 encuestas).`;
+
+  const chartId = `chart_e2_${tabId}`;
+  const html = `
+    <table>
+      <thead><tr><th>Processo</th><th>NPS Atual</th><th>NPS Ant.</th><th>Repres.</th><th>Impacto</th></tr></thead>
+      <tbody>${trows}</tbody>
+    </table>
+    <div class="chart-box">
+      <div class="chart-title">Waterfall \u2014 Decomposi\u00e7\u00e3o WoW (NPS ant. \u2192 NPS atual)</div>
+      <canvas id="${chartId}" style="height:280px"></canvas>
+    </div>
+    <div class="lectura-box">&#128161; <strong>Leitura:</strong> ${lecturaText}</div>`;
+
+  pendingCharts.push({id: chartId, type: 'waterfall_wow', team, rows: sortedRows, outros});
+
+  return buildSection('Etapa 2 \u2014 Impacto WoW por Processo', html);
+}
+
+
+const _e4Data = {};
+const _e4Teams = {};
+
+function _buildE4BodyHtml(sectionId, pd) {
+  if (!pd) return '<p>Sem dados</p>';
+  const team = _e4Teams[sectionId];
+  const gapPP = pd.proc_nps !== null ? pd.proc_nps - pd.proc_tgt : null;
+  const repProc = team ? team.etapa2.find(p => p.proc === pd.proc) : null;
+  const impactApprox = (repProc && gapPP !== null)
+    ? fmtPP(gapPP * (repProc.enc_a / team.enc_a), 2, true) : '\u2014';
+  const procLabel = pd.proc_nps !== null
+    ? `<strong>${pd.proc}</strong> \u2014 NPS <strong>${fmt(pd.proc_nps)}%</strong> | Target <strong>${fmt(pd.proc_tgt)}%</strong> | GAP <strong class="${colorClass(gapPP)}">${fmtPP(gapPP,1,true)}</strong> | Impacto no time <strong>${impactApprox}</strong>`
+    : `<strong>${pd.proc}</strong>`;
+
+  let cduRows = (pd.cdus || []).map(c => {
+    const pct = pd.total_det > 0 ? (c.det / pd.total_det * 100).toFixed(1) : '\u2014';
+    const impCdu = pd.enc > 0 ? fmtPP(-(c.det / pd.enc) * 100, 2, true) : '\u2014';
+    return `<tr><td>${c.cdu}</td><td class="text-right">${c.det}</td><td class="text-right">${pct}%</td><td class="text-right val-neg">${impCdu}</td></tr>`;
+  }).join('');
+  cduRows += `<tr class="row-total"><td>Total detratores</td><td class="text-right">${pd.total_det}</td><td class="text-right">100%</td><td class="text-right">\u2014</td></tr>`;
+
+  const totalSols = (pd.sols || []).reduce((s,x) => s + x.cnt, 0);
+  let solRows = (pd.sols || []).map(s => {
+    const pct = totalSols > 0 ? (s.cnt / totalSols * 100).toFixed(1) : '\u2014';
+    return `<tr><td>${s.sol}</td><td class="text-right">${s.cnt}</td><td class="text-right">${pct}%</td></tr>`;
+  }).join('');
+  const hasSols = pd.sols && pd.sols.filter(s => s.sol !== 'Outros').length > 0;
+  const solTable = hasSols ? `
+    <div class="sol-section-title">📋 Abertura por Solução</div>
+    <table>
+      <thead><tr><th>Solução</th><th class="text-right">Contatos</th><th class="text-right">%</th></tr></thead>
+      <tbody>${solRows}</tbody>
+    </table>` : '';
+
+  return `<div class="etapa4-sub">${procLabel}</div>
+    <table>
+      <thead><tr><th>CDU</th><th class="text-right">Detratores</th><th class="text-right">% det.</th><th class="text-right">Impacto NPS</th></tr></thead>
+      <tbody>${cduRows}</tbody>
+    </table>${solTable}`;
+}
+
+function _renderE4Body(sectionId, idx) {
+  const pd = _e4Data[sectionId] && _e4Data[sectionId][idx];
+  if (!pd) return;
+  document.getElementById('body_' + sectionId).innerHTML = _buildE4BodyHtml(sectionId, pd);
+}
+
+function renderEtapa4(team) {
+  const sectionId = 'e4_' + team.name.replace(/[^a-z0-9]/gi, '_');
+  const procs = (team.etapa4_procs && team.etapa4_procs.length > 0)
+    ? team.etapa4_procs : [team.etapa4];
+  _e4Data[sectionId] = procs;
+  _e4Teams[sectionId] = team;
+
+  const selectOptions = procs.map((p, i) =>
+    `<option value="${i}">${p.proc} (${p.total_det} det.)</option>`
+  ).join('');
+
+  const html = `
+    <div class="proc-filter-row">
+      <label>🔍 Processo:</label>
+      <select class="proc-filter-select" onchange="_renderE4Body('${sectionId}', parseInt(this.value))">${selectOptions}</select>
+    </div>
+    <div id="body_${sectionId}">${_buildE4BodyHtml(sectionId, procs[0])}</div>`;
+
+  return buildSection('Etapa 3 \u2014 Focos de Detra\u00e7\u00e3o (CDU)', html);
+}
+
+function renderEtapa5(team, tabId) {
+  let trows = team.etapa5.map(r => {
+    const gapE = r.en !== null ? r.en - r.et : null;
+    const gapN = r.nn !== null ? r.nn - r.nt : null;
+    const hasData = (gapE !== null || gapN !== null);
+    let alerta;
+    if (!hasData) {
+      alerta = '<span>\u2014</span>';
+    } else {
+      const critical = (gapE !== null && gapE < -3) || (gapN !== null && gapN < -3);
+      alerta = critical ? '<span class="alerta-bad">&#128308;</span>' : '<span class="alerta-ok">&#128994;</span>';
+    }
+    return `<tr>
+      <td><strong>${r.o}</strong></td>
+      <td>${r.en!==null?fmt(r.en)+'%':'\u2014'}</td>
+      <td>${r.nn!==null?fmt(r.nn)+'%':'\u2014'}</td>
+      <td class="${gapE!==null?colorClass(gapE):''}">${gapE!==null?fmtPP(gapE,1,true):'\u2014'}</td>
+      <td class="${gapN!==null?colorClass(gapN):''}">${gapN!==null?fmtPP(gapN,1,true):'\u2014'}</td>
+      <td class="text-center">${alerta}</td>
+    </tr>`;
+  }).join('');
+
+  const valid = team.etapa5.filter(r=>r.en!==null&&r.nn!==null);
+  let criticalOffice = null, refOffice = null;
+  if (valid.length > 0) {
+    criticalOffice = valid.reduce((a,b)=>(Math.min(b.en-b.et,b.nn-b.nt) < Math.min(a.en-a.et,a.nn-a.nt)?b:a));
+    refOffice = valid.reduce((a,b)=>(Math.min(b.en-b.et,b.nn-b.nt) > Math.min(a.en-a.et,a.nn-a.nt)?b:a));
+  }
+  const lecturaText = criticalOffice && refOffice
+    ? `O office cr\u00edtico \u00e9 <strong>${criticalOffice.o}</strong> (EXPERT ${fmt(criticalOffice.en)}% / NEWBIE ${criticalOffice.nn!==null?fmt(criticalOffice.nn)+'%':'\u2014'}). O office de refer\u00eancia \u00e9 <strong>${refOffice.o}</strong>, com melhor performance relativa ao target.`
+    : 'Analise os dados por office para identificar oportunidades de melhoria.';
+
+  const chartId = `chart_e5_${tabId}`;
+  const html = `
+    <table>
+      <thead><tr><th>Office</th><th>EXPERT NPS</th><th>NEWBIE NPS</th><th>GAP Expert</th><th>GAP Newbie</th><th class="text-center">Alerta</th></tr></thead>
+      <tbody>${trows}</tbody>
+    </table>
+    <div class="chart-box">
+      <div class="chart-title">NPS por Office \u00d7 Antiguidade \u2014 semana ${DATES.week_a}/${DATES.year}</div>
+      <canvas id="${chartId}" style="height:280px"></canvas>
+    </div>
+    <div class="lectura-box">&#128161; <strong>Leitura:</strong> ${lecturaText}</div>`;
+
+  pendingCharts.push({id: chartId, type: 'office_bar', team});
+
+  return buildSection('Etapa 4 \u2014 Office \u00d7 Antiguidade', html);
+}
+
+function renderEtapa6(team, tabId) {
+  const rows6 = calcEtapa6(team);
+  const totalGanho = rows6.reduce((s,r)=>s+r.ganho,0);
+
+  let trows = rows6.map(r => `
+    <tr>
+      <td><strong>${r.o}</strong></td>
+      <td class="text-right">${r.ag}</td>
+      <td class="text-right">${fmt(r.q1)}%</td>
+      <td class="text-right">${fmt(r.q4)}%</td>
+      <td class="text-right">${fmt(r.q1-r.q4,1)} pp</td>
+      <td class="text-right val-pos">+${fmt(r.ganho,2)} pp</td>
+    </tr>`).join('');
+
+  trows += `<tr class="row-total"><td colspan="5">Ganho total com dispers\u00e3o de 35 pp</td><td class="text-right val-pos">+${fmt(totalGanho,2)} pp</td></tr>`;
+
+  const lecturaText = `Com a meta de dispers\u00e3o de <strong>35 pp</strong> entre Q1 e Q4, o potencial total de ganho \u00e9 de <strong>+${fmt(totalGanho,2)} pp</strong> no NPS do time. Prioridade: nivelar agentes Q4 de cada office at\u00e9 o patamar m\u00ednimo esperado.`;
+
+  const chartId = `chart_e6_${tabId}`;
+  const html = `
+    <table>
+      <thead><tr><th>Office</th><th class="text-right">Agentes</th><th class="text-right">Q1 NPS</th><th class="text-right">Q4 NPS</th><th class="text-right">Dispers\u00e3o</th><th class="text-right">Ganho pot.</th></tr></thead>
+      <tbody>${trows}</tbody>
+    </table>
+    <div class="chart-box">
+      <div class="chart-title">Dispers\u00e3o Q1 vs Q4 por Office \u2014 com meta de 35 pp</div>
+      <canvas id="${chartId}" style="height:280px"></canvas>
+    </div>
+    <div class="lectura-box">&#128161; <strong>Leitura:</strong> ${lecturaText}</div>`;
+
+  pendingCharts.push({id: chartId, type: 'disp_bar', team, rows6});
+
+  return buildSection('Etapa 5 \u2014 Dispers\u00e3o Q1-Q4 por Agente', html);
+}
+
+function renderHallazgos(team) {
+  const insights = [];
+  const acoes = [];
+
+  // 1. WoW delta
+  const wow = team.nps_a - team.nps_b;
+  const wowSign = wow >= 0 ? '+' : '';
+  const wowCls = wow >= 0 ? 'ins-pos' : 'ins-neg';
+  insights.push({cls: wowCls, icon: wow >= 0 ? '📈' : '📉',
+    text: `NPS <strong>${wowSign}${wow.toFixed(1)} pp WoW</strong>: ${team.nps_b.toFixed(1)}% → ${team.nps_a.toFixed(1)}% (${team.enc_a.toLocaleString('pt-BR')} encuestas)`});
+
+  // 2. GAP vs target
+  const gapCls = team.gap >= 0 ? 'ins-pos' : 'ins-neg';
+  insights.push({cls: gapCls, icon: team.gap >= 0 ? '✅' : '⚠️',
+    text: `GAP vs target: <strong>${team.gap >= 0 ? '+' : ''}${team.gap.toFixed(1)} pp</strong> \u2014 NPS ${team.nps_a.toFixed(1)}% vs meta ${team.target.toFixed(1)}%. Semana anterior estava ${team.gap_b >= 0 ? '+' : ''}${team.gap_b.toFixed(1)} pp vs meta`});
+
+  // 3. Pior processo WoW
+  if (team.etapa2.length > 0) {
+    const worstWoW = [...team.etapa2].sort((a,b) => (a.nps_a - a.nps_b) - (b.nps_a - b.nps_b))[0];
+    const delta = worstWoW.nps_a - worstWoW.nps_b;
+    if (delta < -1) {
+      const rep = (worstWoW.enc_a / team.enc_a * 100).toFixed(0);
+      insights.push({cls: 'ins-neg', icon: '🔻',
+        text: `Maior queda WoW: <strong>"${worstWoW.proc}"</strong> caiu ${Math.abs(delta).toFixed(1)} pp \u2014 NPS foi de ${fmt(worstWoW.nps_b)}% para ${fmt(worstWoW.nps_a)}% (${rep}% do volume do time)`});
+      acoes.push({icon: '🔍', text: `Investigar queda em <strong>"${worstWoW.proc}"</strong>: levantar se houve mudan\u00e7a de fila, aumento de TMA, problema sist\u00eamico ou baixa performance de TLs espec\u00edficos na semana ${DATES.week_a}`});
+    }
+    const bestWoW = [...team.etapa2].sort((a,b) => (b.nps_a - b.nps_b) - (a.nps_a - a.nps_b))[0];
+    const deltaB = bestWoW.nps_a - bestWoW.nps_b;
+    if (deltaB > 2) {
+      const repB = (bestWoW.enc_a / team.enc_a * 100).toFixed(0);
+      insights.push({cls: 'ins-pos', icon: '📊',
+        text: `Destaque positivo WoW: <strong>"${bestWoW.proc}"</strong> subiu ${deltaB.toFixed(1)} pp (${repB}% do volume)`});
+    }
+  }
+
+  // 4. Pior processo vs target (etapa3)
+  if (team.etapa3.length > 0) {
+    const worstGap = [...team.etapa3].sort((a,b) => (a.nps - a.tgt) - (b.nps - b.tgt))[0];
+    const gap3 = worstGap.nps - worstGap.tgt;
+    const rep3 = (worstGap.enc / team.enc_a * 100).toFixed(0);
+    insights.push({cls: gap3 < 0 ? 'ins-neg' : 'ins-neutral', icon: '🎯',
+      text: `Maior GAP vs target: <strong>"${worstGap.proc}"</strong> com ${gap3.toFixed(1)} pp (NPS ${worstGap.nps.toFixed(1)}% vs meta ${worstGap.tgt.toFixed(1)}%, ${rep3}% do volume)`});
+    acoes.push({icon: '🎯', text: `Elaborar plano de a\u00e7\u00e3o para <strong>"${worstGap.proc}"</strong>: NPS ${worstGap.nps.toFixed(1)}% vs meta ${worstGap.tgt.toFixed(1)}% \u2014 revisar CDUs, monitorar chamadas e alinhar com TL sobre pontos de melhoria`});
+  }
+
+  // 5. CDU principal
+  if (team.etapa4 && team.etapa4.cdus.length > 0) {
+    const topCdu = team.etapa4.cdus.find(c => c.cdu !== 'Outros');
+    if (topCdu) {
+      const pct = team.etapa4.total_det > 0 ? (topCdu.det / team.etapa4.total_det * 100).toFixed(0) : '—';
+      insights.push({cls: 'ins-alert', icon: '🔴',
+        text: `CDU principal em <strong>"${team.etapa4.proc}"</strong>: <strong>"${topCdu.cdu}"</strong> (${pct}% dos ${team.etapa4.total_det} detratores)`});
+      acoes.push({icon: '💬', text: `Criar material de coaching para <strong>"${topCdu.cdu}"</strong> no processo "${team.etapa4.proc}": ${pct}% dos detratores concentrados nessa causa \u2014 revisar script de atendimento e calibrar com TLs`});
+    }
+  }
+
+  // 6. Office crítico (etapa5)
+  const validOffices = team.etapa5.filter(r => r.en !== null || r.nn !== null);
+  if (validOffices.length > 0) {
+    const scored = validOffices.map(r => {
+      const gE = r.en !== null ? r.en - r.et : 999;
+      const gN = r.nn !== null ? r.nn - r.nt : 999;
+      return {...r, minGap: Math.min(gE === 999 ? gN : gE, gN === 999 ? gE : gN)};
+    });
+    const critOff = scored.sort((a,b) => a.minGap - b.minGap)[0];
+    const critGaps = [];
+    if (critOff.en !== null) critGaps.push(`EXPERT ${critOff.en.toFixed(1)}% (meta ${critOff.et.toFixed(1)}%)`);
+    if (critOff.nn !== null) critGaps.push(`NEWBIE ${critOff.nn.toFixed(1)}% (meta ${critOff.nt.toFixed(1)}%)`);
+    if (critOff.minGap < -2) {
+      insights.push({cls: 'ins-neg', icon: '🏢',
+        text: `Office crítico: <strong>${critOff.o}</strong> — ${critGaps.join(' | ')}`});
+      acoes.push({icon: '🏢', text: `Reuni\u00e3o de alinhamento com TL do office <strong>${critOff.o}</strong>: analisar distribui\u00e7\u00e3o de performance, identificar agentes abaixo da meta e criar plano individualizado de desenvolvimento`});
+    }
+  }
+
+  // 7. Dispersão Q1-Q4
+  if (team.etapa6.rows.length > 0) {
+    const rows6 = calcEtapa6(team);
+    const totalGanho = rows6.reduce((s,r) => s + r.ganho, 0);
+    if (totalGanho > 0.05) {
+      insights.push({cls: 'ins-opportunity', icon: '💡',
+        text: `Potencial de nivelamento: <strong>+${totalGanho.toFixed(2)} pp</strong> se dispersão Q1-Q4 reduzida a 35pp por office`});
+      const best = [...rows6].sort((a,b) => b.ganho - a.ganho)[0];
+      acoes.push({icon: '📋', text: `Programa de nivelamento Q4 priorit\u00e1rio em <strong>${best.o}</strong> (+${best.ganho.toFixed(2)} pp potencial): fazer calibra\u00e7\u00f5es individuais com agentes Q4, compartilhar boas pr\u00e1ticas dos agentes Q1 e monitorar evolu\u00e7\u00e3o semanal`});
+    }
+  }
+
+  const insHtml = insights.map(i =>
+    `<div class="insight-item ${i.cls}"><span class="ins-icon">${i.icon}</span><span>${i.text}</span></div>`
+  ).join('');
+
+  const acoesHtml = acoes.length > 0
+    ? acoes.map(a =>
+        `<div class="acao-item"><span class="acao-icon">${a.icon}</span><span>${a.text}</span></div>`
+      ).join('')
+    : '<div class="acao-item"><span class="acao-icon">✅</span><span>Sem ações críticas identificadas para esta semana</span></div>';
+
+  return `
+    <div class="insights-box">
+      <div class="insights-header">📌 Diagnóstico da Semana</div>
+      <div class="insights-list">${insHtml}</div>
+    </div>
+    <div class="acoes-box">
+      <div class="acoes-header">✅ Ações Recomendadas</div>
+      <div class="acoes-list">${acoesHtml}</div>
+    </div>`;
+}
+
+// =====================================================================
+// MAIN RENDER
+// =====================================================================
+const pendingCharts = [];
+
+function renderTab(team, tabId) {
+  const gapCls = team.gap >= 0 ? 'val-pos' : 'val-neg';
+  const cardGapBorder = team.gap >= 0 ? 'card-green' : 'card-red';
+  const cardGapValCls = team.gap >= 0 ? 'card-value-green' : 'card-value-red';
+  const delta = team.nps_a - team.nps_b;
+  const deltaCls = delta >= 0 ? 'val-pos' : 'val-neg';
+
+  const html = `
+    <div class="report-header">
+      <h1>Reporte Semanal NPS \u2014 ${team.name} \u2014 ${DATES.week_a} a ${DATES.week_b}/${DATES.year}</h1>
+    </div>
+    <p class="report-subtitle">Semana: ${DATES.week_a_start} (seg) a ${DATES.week_a_end} (dom) ${DATES.year}. Comparativo: ${DATES.week_b_start} a ${DATES.week_b_end}/${DATES.year}.</p>
+
+    <div class="cards-row">
+      <div class="card card-blue">
+        <div class="card-label">NPS</div>
+        <div class="card-value card-value-blue">${fmt(team.nps_a)}%</div>
+        <div class="card-sub ${deltaCls}">${delta>=0?'\u25b2':'\u25bc'} ${fmtPP(Math.abs(delta),1,false)} WoW</div>
+      </div>
+      <div class="card card-gray">
+        <div class="card-label">TARGET</div>
+        <div class="card-value card-value-gray">${fmt(team.target)}%</div>
+        <div class="card-sub">refer\u00eancia da semana</div>
+      </div>
+      <div class="card ${cardGapBorder}">
+        <div class="card-label">GAP VS TARGET</div>
+        <div class="card-value ${cardGapValCls}">${fmtPP(team.gap,1,true)}</div>
+        <div class="card-sub">${team.enc_a.toLocaleString('pt-BR')} encuestas</div>
+      </div>
+    </div>
+
+    ${renderMacro(team)}
+    ${renderEtapa2(team, tabId)}
+    ${renderEtapa4(team)}
+    ${renderEtapa5(team, tabId)}
+    ${renderEtapa6(team, tabId)}
+    ${renderHallazgos(team)}
+  `;
+  document.getElementById(`tab-${tabId}`).innerHTML = html;
+}
+
+// =====================================================================
+// CHART RENDERERS
+// =====================================================================
+function renderWaterfallWow(cfg) {
+  const {id, team, rows, outros} = cfg;
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+
+  // PASSO 1: calcular barras flutuantes (sem ancoras)
+  const floatData = [];
+  const floatColors = [];
+  const floatLabels = [];
+  let running = team.nps_b;
+  rows.forEach(r => {
+    const low = r.impact >= 0 ? running : running + r.impact;
+    const high = r.impact >= 0 ? running + r.impact : running;
+    floatData.push([low, high]);
+    floatColors.push(r.impact >= 0 ? '#388e3c' : '#d32f2f');
+    floatLabels.push(r.proc.length > 17 ? r.proc.substring(0,15)+'\u2026' : r.proc);
+    running += r.impact;
+  });
+  // Outros
+  const oLow = outros >= 0 ? running : running + outros;
+  const oHigh = outros >= 0 ? running + outros : running;
+  floatData.push([oLow, oHigh]);
+  floatColors.push(outros >= 0 ? '#388e3c' : '#d32f2f');
+  floatLabels.push('Outros');
+  running += outros;
+
+  // PASSO 2: determinar yMin e yMax a partir dos valores reais
+  const allFloatVals = [...floatData.flat(), team.nps_b, team.nps_a];
+  const minVal = Math.min(...allFloatVals);
+  const maxVal = Math.max(...allFloatVals);
+  const pad = Math.max((maxVal - minVal) * 0.25, 1.5);
+  const yMin = minVal - pad;
+  const yMax = maxVal + pad;
+
+  // PASSO 3: barras ancora vao de yMin ate o valor (nao de 0)
+  const allData = [[yMin, team.nps_b], ...floatData, [yMin, team.nps_a]];
+  const allColors = ['#1a73e8', ...floatColors, '#1a73e8'];
+  const allLabels = [
+    `${team.nps_b.toFixed(1)}% ant.`,
+    ...floatLabels,
+    `${team.nps_a.toFixed(1)}% atual`
+  ];
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: allLabels,
+      datasets: [{
+        data: allData,
+        backgroundColor: allColors,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {display: false},
+        tooltip: {callbacks: {label: ctx => {
+          const v = ctx.raw;
+          if (!Array.isArray(v)) return '';
+          const i = ctx.dataIndex;
+          if (i === 0 || i === allData.length-1) return `NPS: ${v[1].toFixed(1)}%`;
+          const isNeg = allColors[i] === '#d32f2f';
+          const mag = Math.abs(v[1]-v[0]);
+          return `Impacto: ${isNeg?'-':'+'}${mag.toFixed(2)} pp`;
+        }}},
+        datalabels: {
+          display: true,
+          formatter: (val, ctx) => {
+            if (!Array.isArray(val)) return '';
+            const i = ctx.dataIndex;
+            if (i === 0 || i === allData.length - 1) return val[1].toFixed(1) + '%';
+            const isNeg = allColors[i] === '#d32f2f';
+            const mag = Math.abs(val[1] - val[0]);
+            return (isNeg ? '-' : '+') + mag.toFixed(2) + ' pp';
+          },
+          color: '#fff',
+          font: { size: 10, weight: 'bold' },
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+        }
+      },
+      scales: {
+        y: {
+          min: yMin, max: yMax,
+          grid: {color: '#f0f0f0'},
+          ticks: {callback: v => v.toFixed(1)+'%', font: {size: 11}}
+        },
+        x: {
+          grid: {display: false},
+          ticks: {font: {size: 10}, maxRotation: 35}
+        }
+      }
+    }
+  });
+}
+
+
+function renderOfficeBar(cfg) {
+  const {id, team} = cfg;
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+
+  const e5 = team.etapa5;
+  const labels = e5.map(r=>r.o);
+  const expertNPS = e5.map(r=>r.en);
+  const newbieNPS = e5.map(r=>r.nn);
+  const expertTgt = e5.map(r=>r.et);
+  const newbieTgt = e5.map(r=>r.nt);
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'EXPERT NPS',
+          data: expertNPS,
+          backgroundColor: 'rgba(26,115,232,0.85)',
+          borderRadius: 3,
+        },
+        {
+          label: 'NEWBIE NPS',
+          data: newbieNPS,
+          backgroundColor: 'rgba(255,152,0,0.85)',
+          borderRadius: 3,
+        },
+        {
+          type: 'line',
+          label: 'EXPERT Target',
+          data: expertTgt,
+          borderColor: 'rgba(26,115,232,0.9)',
+          backgroundColor: 'rgba(26,115,232,0.0)',
+          borderWidth: 2,
+          borderDash: [5,3],
+          pointRadius: 4,
+          pointBackgroundColor: 'rgba(26,115,232,0.9)',
+          tension: 0,
+          order: 0,
+        },
+        {
+          type: 'line',
+          label: 'NEWBIE Target',
+          data: newbieTgt,
+          borderColor: 'rgba(255,152,0,0.9)',
+          backgroundColor: 'rgba(255,152,0,0.0)',
+          borderWidth: 2,
+          borderDash: [5,3],
+          pointRadius: 4,
+          pointBackgroundColor: 'rgba(255,152,0,0.9)',
+          tension: 0,
+          order: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.raw !== null ? ctx.raw.toFixed(1) + '%' : '\u2014'}` } }
+      },
+      scales: {
+        y: {
+          suggestedMin: (() => {
+            const vals = [...expertNPS, ...newbieNPS, ...expertTgt, ...newbieTgt].filter(v => v !== null);
+            return vals.length > 0 ? Math.max(0, Math.min(...vals) - 10) : 0;
+          })(),
+          suggestedMax: (() => {
+            const vals = [...expertNPS, ...newbieNPS, ...expertTgt, ...newbieTgt].filter(v => v !== null);
+            return vals.length > 0 ? Math.min(100, Math.max(...vals) + 10) : 100;
+          })(),
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => v + '%', font: { size: 11 } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function renderDispBar(cfg) {
+  const {id, rows6} = cfg;
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+
+  // Gráfico horizontal: cada office tem Q1 (verde) e Q4 (vermelho)
+  // + linha de Q4 simulado (meta 35pp gap)
+  const labels = rows6.map(r => `${r.o} (${r.ag} ag.)`);
+  const q1  = rows6.map(r => r.q1);
+  const q4  = rows6.map(r => r.q4);
+  const q4meta = rows6.map(r => Math.max(r.q4, r.q1 - 35)); // meta: Q1-35
+
+  const allVals = [...q1, ...q4].filter(v => v != null);
+  const yMin = allVals.length ? Math.max(0, Math.min(...allVals) - 8) : 0;
+  const yMax = allVals.length ? Math.min(100, Math.max(...allVals) + 8) : 100;
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Q1 NPS (top 25%)',
+          data: q1,
+          backgroundColor: 'rgba(27,94,32,0.80)',
+          borderColor: 'rgba(27,94,32,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.6,
+        },
+        {
+          label: 'Q4 NPS (bottom 25%)',
+          data: q4,
+          backgroundColor: 'rgba(211,47,47,0.80)',
+          borderColor: 'rgba(211,47,47,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.6,
+        },
+        {
+          type: 'line',
+          label: 'Meta Q4 (Q1 − 35pp)',
+          data: q4meta,
+          borderColor: 'rgba(255,152,0,0.95)',
+          backgroundColor: 'rgba(255,152,0,0.0)',
+          borderWidth: 2,
+          borderDash: [6, 3],
+          pointRadius: 5,
+          pointBackgroundColor: 'rgba(255,152,0,0.95)',
+          tension: 0,
+          order: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 14 } },
+        datalabels: {
+          display: true,
+          formatter: (val, ctx) => val != null ? val.toFixed(1) + '%' : '',
+          color: ctx => ctx.dataset.type === 'line' ? '#e65100' : '#fff',
+          font: { size: 10, weight: 'bold' },
+          anchor: ctx => ctx.dataset.type === 'line' ? 'end' : 'center',
+          align:  ctx => ctx.dataset.type === 'line' ? 'top'   : 'center',
+        }
+      },
+      scales: {
+        y: {
+          min: yMin, max: yMax,
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => v + '%', font: { size: 11 } }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function renderPendingCharts() {
+  pendingCharts.forEach(cfg => {
+    if (cfg.type === 'waterfall_wow') renderWaterfallWow(cfg);
+    else if (cfg.type === 'office_bar') renderOfficeBar(cfg);
+    else if (cfg.type === 'disp_bar') renderDispBar(cfg);
+  });
+}
+
+// =====================================================================
+// SWITCH TAB (4 abas)
+// =====================================================================
+function switchTab(tabId) {
+  const ids = ['cross','pre','post','compra'];
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', ids[i] === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => {
+    tc.classList.toggle('active', tc.id === `tab-${tabId}`);
+  });
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  renderTab(buildCross(), 'cross');
+  renderTab(teams.pre, 'pre');
+  renderTab(teams.post, 'post');
+  renderTab(teams.compra, 'compra');
+  renderPendingCharts();
+});
+</script>
+</body>
+</html>
